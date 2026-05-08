@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="RSB Tasks"/>
+  <meta name="theme-color" content="#c0392b"/>
+  <title>Raghuvir Sweets And Bakers</title>
+  <link rel="manifest" id="pwa-manifest"/>
+  <link rel="apple-touch-icon" id="apple-icon"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script>
+  (function(){
+    try{
+      const mf={name:"Raghuvir Sweets And Bakers",short_name:"RSB Tasks",
+        start_url:"./",display:"standalone",background_color:"#fff8f0",
+        theme_color:"#c0392b",orientation:"any",scope:"./"};
+      const bl=new Blob([JSON.stringify(mf)],{type:"application/json"});
+      document.getElementById("pwa-manifest").href=URL.createObjectURL(bl);
+    }catch(e){}
+  })();
+  </script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     INSTALL APP SPLASH — Full screen with phone mockup
+══════════════════════════════════════════════════════════════ -->
+<div id="app-choice-splash" class="splash-overlay" style="display:none">
+  <div class="splash-bg-circles">
+    <div class="sbc sbc1"></div>
+    <div class="sbc sbc2"></div>
+    <div class="sbc sbc3"></div>
+  </div>
+
+  <div class="splash-layout">
+
+    <!-- LEFT: Phone mockup -->
+    <div class="splash-phone-col">
+      <div class="phone-mockup">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <!-- Mini app preview inside phone -->
+            <div class="phone-header">
+              <div class="ph-logo" id="ph-logo-el"><i class="fas fa-store-alt" style="font-size:.7rem"></i></div>
+              <div class="ph-title">Raghuvir Tasks</div>
+              <div class="ph-dot"></div>
+            </div>
+            <div class="phone-body">
+              <div class="ph-card ph-card-red">
+                <div class="ph-card-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="ph-card-val">12</div>
+                <div class="ph-card-lbl">Total</div>
+              </div>
+              <div class="ph-card ph-card-green">
+                <div class="ph-card-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="ph-card-val">8</div>
+                <div class="ph-card-lbl">Done</div>
+              </div>
+              <div class="ph-task">
+                <div class="ph-task-dot" style="background:#d97706"></div>
+                <div class="ph-task-txt">Prepare sweets order</div>
+              </div>
+              <div class="ph-task">
+                <div class="ph-task-dot" style="background:#2563eb"></div>
+                <div class="ph-task-txt">Pack birthday cake</div>
+              </div>
+              <div class="ph-task">
+                <div class="ph-task-dot" style="background:#059669"></div>
+                <div class="ph-task-txt">Delivery to customer ✓</div>
+              </div>
+              <div class="ph-btn"><i class="fas fa-check"></i> Mark as Done</div>
+            </div>
+          </div>
+          <div class="phone-home-bar"></div>
+        </div>
+        <!-- Glow under phone -->
+        <div class="phone-glow"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Content & buttons -->
+    <div class="splash-content-col">
+
+      <div class="splash-logo-area">
+        <div class="splash-app-icon" id="splash-logo">
+          <i class="fas fa-store-alt"></i>
+        </div>
+        <div class="splash-badge">Task Manager</div>
+      </div>
+
+      <h1 class="splash-title">Raghuvir Sweets<br/><span>&amp; Bakers</span></h1>
+      <p class="splash-desc">Manage your staff tasks instantly.<br/>Works on mobile, tablet &amp; desktop.</p>
+
+      <div class="splash-features">
+        <div class="splash-feat"><i class="fas fa-bolt"></i> Real-time updates</div>
+        <div class="splash-feat"><i class="fas fa-wifi-slash"></i> Works offline</div>
+        <div class="splash-feat"><i class="fas fa-bell"></i> Instant tasks</div>
+        <div class="splash-feat"><i class="fas fa-file-excel"></i> Excel export</div>
+      </div>
+
+      <div class="splash-actions">
+        <button class="splash-install-btn" id="sc-app-btn" onclick="chooseApp()">
+          <div class="sib-icon"><i class="fas fa-download"></i></div>
+          <div class="sib-text">
+            <span class="sib-main">Install App</span>
+            <span class="sib-sub">Add to home screen · Free forever</span>
+          </div>
+          <i class="fas fa-chevron-right sib-arr"></i>
+        </button>
+
+        <button class="splash-web-btn" onclick="chooseWeb()">
+          <i class="fas fa-globe"></i>
+          <span>Continue in Browser</span>
+        </button>
+      </div>
+
+      <p class="splash-note">You can install anytime from the menu</p>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+
+  <div class="login-left">
+    <div class="ll-inner">
+      <div class="ll-logo" id="ll-logo"><i class="fas fa-store-alt"></i></div>
+      <h1 class="ll-brand" id="ll-brand-text">Raghuvir<br/><span>Sweets</span><br/><em>And Bakers</em></h1>
+      <p class="ll-tagline">Hissa Har Khushiyo ka</p>
+      <p class="ll-sub-tag">Staff Task Management System</p>
+      <div class="ll-features">
+        <div class="ll-feat"><i class="fas fa-bolt"></i> Real-time task tracking</div>
+        <div class="ll-feat"><i class="fas fa-mobile-screen"></i> Works on all devices</div>
+        <div class="ll-feat"><i class="fas fa-file-excel"></i> Export to Excel</div>
+      </div>
+    </div>
+    <div class="ll-pattern"></div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-form-box">
+
+      <div class="mob-brand-hd">
+        <div class="mob-brand-logo" id="mob-logo"><i class="fas fa-store-alt"></i></div>
+        <div>
+          <div class="mob-brand-name" id="mob-brand-name">Raghuvir Sweets And Bakers</div>
+          <div class="mob-brand-sub">Task Management System</div>
+        </div>
+      </div>
+
+      <div class="form-tabs">
+        <button class="ftab active" id="ftab-in"  onclick="switchTab('in')">Sign In</button>
+        <button class="ftab"        id="ftab-reg" onclick="switchTab('reg')">Register</button>
+      </div>
+
+      <!-- SIGN IN -->
+      <div id="f-in">
+        <h3 class="form-title">Welcome back</h3>
+        <p class="form-sub">Enter your name or email with password</p>
+
+        <div id="admin-login-row" style="display:none">
+          <div class="fg">
+            <label class="fl"><i class="fas fa-envelope"></i> Admin Email</label>
+            <input type="email" id="l-email" class="fi" placeholder="admin@raghuvir.com"
+              autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doLogin()"/>
+          </div>
+        </div>
+
+        <div id="staff-login-row">
+          <div class="fg">
+            <label class="fl"><i class="fas fa-user"></i> Your Name or Email</label>
+            <input type="text" id="l-identifier" class="fi"
+              placeholder="e.g. Ramesh Patel or ramesh@email.com"
+              autocomplete="name"
+              onkeydown="if(event.key==='Enter')doLogin()"/>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl"><i class="fas fa-lock"></i> Password</label>
+          <div class="pw-w">
+            <input type="password" id="l-pass" class="fi" placeholder="Enter your password"
+              onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password"/>
+            <button class="eye" onclick="toggleEye('l-pass',this)" type="button"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+
+        <div id="l-err" class="ferr" style="display:none"></div>
+
+        <button class="sub-btn" id="l-btn" onclick="doLogin()">
+          Sign In <i class="fas fa-arrow-right"></i>
+        </button>
+
+        <div class="login-foot-row">
+          <p class="form-switch" style="margin:0">New here? <a href="#" onclick="switchTab('reg')">Register →</a></p>
+          <a href="#" id="admin-toggle-link" onclick="toggleAdminLogin()">
+            <i class="fas fa-shield-halved"></i> Admin Login
+          </a>
+        </div>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="f-reg" style="display:none">
+        <h3 class="form-title">Create Account</h3>
+        <p class="form-sub">Register as a staff member (Doer)</p>
+
+        <div class="fg">
+          <label class="fl">Full Name <span class="req-star">*</span></label>
+          <input type="text" id="r-name" class="fi" placeholder="e.g. Ramesh Patel" autocomplete="name"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Email <span class="opt-lbl">Optional</span></label>
+          <input type="email" id="r-email" class="fi" placeholder="your@email.com" autocomplete="email" inputmode="email"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Phone <span class="opt-lbl">Optional</span></label>
+          <input type="tel" id="r-phone" class="fi" placeholder="98XXXXXXXX" inputmode="tel"/>
+        </div>
+        <div class="two-col">
+          <div class="fg">
+            <label class="fl">Password <span class="req-star">*</span></label>
+            <div class="pw-w">
+              <input type="password" id="r-pass" class="fi" placeholder="Min 6 chars" autocomplete="new-password"/>
+              <button class="eye" onclick="toggleEye('r-pass',this)" type="button"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Confirm <span class="req-star">*</span></label>
+            <div class="pw-w">
+              <input type="password" id="r-conf" class="fi" placeholder="Repeat"
+                onkeydown="if(event.key==='Enter')doRegister()" autocomplete="new-password"/>
+              <button class="eye" onclick="toggleEye('r-conf',this)" type="button"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+        <div id="r-err" class="ferr" style="display:none"></div>
+        <button class="sub-btn" id="r-btn" onclick="doRegister()">
+          Create Account <i class="fas fa-arrow-right"></i>
+        </button>
+        <p class="form-switch">Already registered? <a href="#" onclick="switchTab('in')">Sign in →</a></p>
+      </div>
+
+      <div id="login-install-row" style="display:none;margin-top:14px">
+        <button class="login-install-btn" onclick="installPWA()">
+          <i class="fas fa-download"></i> Install App on your Phone
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN DASHBOARD
+══════════════════════════════════════════════════ -->
+<div id="screen-admin" class="screen">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo" id="sb-logo-el"><i class="fas fa-store-alt"></i></div>
+      <div class="sb-title">
+        <span class="sb-name">Raghuvir</span>
+        <span class="sb-sub">Sweets &amp; Bakers</span>
+      </div>
+    </div>
+    <div class="sb-badge"><i class="fas fa-crown"></i> Admin Panel</div>
+    <nav class="sb-nav">
+      <a class="sl active" onclick="gTab('overview',this)" href="#">
+        <span class="sl-ic"><i class="fas fa-chart-pie"></i></span><span class="sl-tx">Overview</span>
+      </a>
+      <a class="sl" onclick="gTab('assign',this)" href="#">
+        <span class="sl-ic"><i class="fas fa-plus-circle"></i></span><span class="sl-tx">Assign Task</span>
+      </a>
+      <a class="sl" onclick="gTab('tasks',this)" href="#">
+        <span class="sl-ic"><i class="fas fa-list-check"></i></span><span class="sl-tx">All Tasks</span>
+        <span class="sl-num" id="sn-tasks">0</span>
+      </a>
+      <a class="sl" onclick="gTab('staff',this)" href="#">
+        <span class="sl-ic"><i class="fas fa-users"></i></span><span class="sl-tx">Staff</span>
+        <span class="sl-num" id="sn-staff">0</span>
+      </a>
+      <a class="sl" onclick="gTab('reports',this)" href="#">
+        <span class="sl-ic"><i class="fas fa-file-excel"></i></span><span class="sl-tx">Export Excel</span>
+      </a>
+    </nav>
+    <div id="sb-install-row" style="display:none;padding:10px 14px 0">
+      <button class="sb-install-btn" onclick="installPWA()"><i class="fas fa-download"></i> Install App</button>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-av" id="sb-av">A</div>
+      <div class="sb-uinfo">
+        <div class="sb-un" id="sb-un">Admin</div>
+        <div class="sb-ue" id="sb-ue"></div>
+      </div>
+      <button class="sb-out" onclick="doLogout()" title="Sign Out"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+  <div class="sb-veil" id="sb-veil" onclick="closeSB()"></div>
+
+  <div class="a-body">
+    <header class="a-topbar">
+      <button class="a-ham" onclick="openSB()"><i class="fas fa-bars"></i></button>
+      <div class="a-tb-brand">Raghuvir <em>Sweets &amp; Bakers</em></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="a-tb-install" id="mob-install-btn" onclick="installPWA()" style="display:none" title="Install App"><i class="fas fa-download"></i></button>
+        <button class="a-tb-out" onclick="doLogout()"><i class="fas fa-right-from-bracket"></i></button>
+      </div>
+    </header>
+
+    <section class="atab active" id="atab-overview">
+      <div class="page-hd">
+        <div>
+          <h2 class="page-title">Dashboard <span class="live-tag"><i class="fas fa-circle"></i> Live</span></h2>
+          <p class="page-dt" id="a-date"></p>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card total"><div class="stat-ic"><i class="fas fa-layer-group"></i></div><div><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total Tasks</div></div></div>
+        <div class="stat-card pend"><div class="stat-ic"><i class="fas fa-hourglass-half"></i></div><div><div class="stat-val" id="st-pend">0</div><div class="stat-lbl">Pending</div></div></div>
+        <div class="stat-card prog"><div class="stat-ic"><i class="fas fa-spinner"></i></div><div><div class="stat-val" id="st-prog">0</div><div class="stat-lbl">In Progress</div></div></div>
+        <div class="stat-card done"><div class="stat-ic"><i class="fas fa-circle-check"></i></div><div><div class="stat-val" id="st-done">0</div><div class="stat-lbl">Completed</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <h3 class="card-title"><i class="fas fa-clock-rotate-left"></i> Recent Tasks</h3>
+          <button class="link-btn" onclick="gTab('tasks',document.querySelectorAll('.sl')[2])">View All <i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="tbl-wrap"><table class="tbl">
+          <thead><tr><th>Staff</th><th>Task</th><th>Status</th><th>Assigned At</th><th>Completed At</th></tr></thead>
+          <tbody id="recent-body"><tr><td colspan="5"><div class="empty-state"><i class="fas fa-inbox"></i><p>No tasks yet</p></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section class="atab" id="atab-assign">
+      <div class="page-hd"><h2 class="page-title">Assign New Task</h2></div>
+      <div class="form-card">
+        <div class="fg">
+          <label class="fl">Staff Member <span class="req-star">*</span></label>
+          <div class="select-wrap">
+            <select id="a-staff" class="fi"><option value="">— Select a staff member —</option></select>
+            <i class="fas fa-chevron-down select-arrow"></i>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Task Description <span class="req-star">*</span></label>
+          <textarea id="a-desc" class="fi" rows="4" placeholder="Describe the task clearly…"></textarea>
+        </div>
+        <div class="fg">
+          <label class="fl">Priority</label>
+          <div class="select-wrap">
+            <select id="a-prio" class="fi">
+              <option value="normal">🟢 Normal</option>
+              <option value="high">🟡 High</option>
+              <option value="urgent">🔴 Urgent</option>
+            </select>
+            <i class="fas fa-chevron-down select-arrow"></i>
+          </div>
+        </div>
+        <div id="a-err" class="ferr" style="display:none"></div>
+        <div class="btn-row">
+          <button class="sub-btn" onclick="submitTask()"><i class="fas fa-paper-plane"></i> Assign Task</button>
+          <button class="ghost-btn" onclick="clearForm()"><i class="fas fa-xmark"></i> Clear</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="atab" id="atab-tasks">
+      <div class="page-hd">
+        <h2 class="page-title">All Tasks</h2>
+        <button class="export-btn" onclick="exportExcel('tasks')"><i class="fas fa-file-excel"></i> Export</button>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <div class="srch-wrap"><i class="fas fa-magnifying-glass"></i>
+            <input type="text" id="tsearch" class="srch" placeholder="Search tasks or staff…" oninput="renderTasks()"/>
+          </div>
+          <div class="filter-chips">
+            <button class="fchip active" onclick="setF('all',this)">All</button>
+            <button class="fchip" onclick="setF('pending',this)">Pending</button>
+            <button class="fchip" onclick="setF('inprogress',this)">In Progress</button>
+            <button class="fchip" onclick="setF('done',this)">Done</button>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl">
+          <thead><tr><th>Staff</th><th>Task</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Started</th><th>Completed</th><th>Duration</th><th>Actions</th></tr></thead>
+          <tbody id="tasks-body"><tr><td colspan="9"><div class="empty-state"><i class="fas fa-inbox"></i><p>No tasks found</p></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section class="atab" id="atab-staff">
+      <div class="page-hd">
+        <h2 class="page-title">Staff Members</h2>
+        <button class="export-btn" onclick="exportExcel('staff')"><i class="fas fa-file-excel"></i> Export</button>
+      </div>
+      <div class="staff-grid" id="staff-grid">
+        <div class="empty-state full-col"><i class="fas fa-users-slash"></i><p>No staff registered yet</p></div>
+      </div>
+    </section>
+
+    <section class="atab" id="atab-reports">
+      <div class="page-hd"><h2 class="page-title">Export Data to Excel</h2></div>
+      <div class="reports-grid">
+        <div class="report-tile" onclick="exportExcel('tasks')">
+          <div class="rt-icon rt-green"><i class="fas fa-list-check"></i></div>
+          <div class="rt-body"><div class="rt-title">All Tasks</div><div class="rt-desc">All tasks with status, timestamps, priority</div></div>
+          <div class="rt-btn"><i class="fas fa-download"></i> Download</div>
+        </div>
+        <div class="report-tile" onclick="exportExcel('done')">
+          <div class="rt-icon rt-blue"><i class="fas fa-circle-check"></i></div>
+          <div class="rt-body"><div class="rt-title">Completed Tasks</div><div class="rt-desc">Start time, completion time &amp; duration</div></div>
+          <div class="rt-btn"><i class="fas fa-download"></i> Download</div>
+        </div>
+        <div class="report-tile" onclick="exportExcel('pending')">
+          <div class="rt-icon rt-orange"><i class="fas fa-hourglass-half"></i></div>
+          <div class="rt-body"><div class="rt-title">Pending &amp; In-Progress</div><div class="rt-desc">Tasks not yet completed</div></div>
+          <div class="rt-btn"><i class="fas fa-download"></i> Download</div>
+        </div>
+        <div class="report-tile" onclick="exportExcel('staff')">
+          <div class="rt-icon rt-red"><i class="fas fa-users"></i></div>
+          <div class="rt-body"><div class="rt-title">Staff Performance</div><div class="rt-desc">Per-staff summary with completion rate</div></div>
+          <div class="rt-btn"><i class="fas fa-download"></i> Download</div>
+        </div>
+        <div class="report-tile full-tile" onclick="exportExcel('all')">
+          <div class="rt-icon rt-gold"><i class="fas fa-database"></i></div>
+          <div class="rt-body"><div class="rt-title">Full Export</div><div class="rt-desc">All tasks + staff in one complete file</div></div>
+          <div class="rt-btn rt-btn-gold"><i class="fas fa-download"></i> Download All</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     DOER DASHBOARD
+══════════════════════════════════════════════════ -->
+<div id="screen-doer" class="screen">
+  <header class="d-header">
+    <div class="d-hdr-brand" id="d-hdr-brand-logo">
+      <i class="fas fa-store-alt"></i> Raghuvir
+    </div>
+    <div class="d-hdr-right">
+      <div class="d-hdr-user">
+        <div class="d-hdr-av" id="d-av">?</div>
+        <div class="d-hdr-name" id="d-nm">Staff</div>
+      </div>
+      <button class="d-install-btn" id="d-install-btn" onclick="installPWA()" style="display:none" title="Install App"><i class="fas fa-download"></i></button>
+      <button class="d-logout-btn" onclick="doLogout()"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </header>
+
+  <div class="d-body">
+    <div class="greet-banner">
+      <div class="gb-av-wrap">
+        <div class="gb-av" id="gc-av">?</div>
+        <span class="gb-online"></span>
+      </div>
+      <div class="gb-text">
+        <h2 id="gc-nm">Hello!</h2>
+        <p id="gc-dt">Today</p>
+      </div>
+      <div class="gb-counters">
+        <div class="gb-cnt pend-cnt"><span id="gc-pend">0</span><small>Pending</small></div>
+        <div class="gb-sep"></div>
+        <div class="gb-cnt prog-cnt"><span id="gc-prog">0</span><small>In Progress</small></div>
+        <div class="gb-sep"></div>
+        <div class="gb-cnt done-cnt"><span id="gc-done">0</span><small>Done</small></div>
+      </div>
+    </div>
+
+    <div class="d-tabs">
+      <button class="d-tab active" id="dt-my" onclick="dTab('my',this)">
+        <i class="fas fa-list-check"></i> My Tasks <span class="d-bdg" id="dbn-my">0</span>
+      </button>
+      <button class="d-tab" id="dt-done" onclick="dTab('done',this)">
+        <i class="fas fa-trophy"></i> Completed <span class="d-bdg done-bdg" id="dbn-done">0</span>
+      </button>
+    </div>
+
+    <div id="d-panel-my">
+      <div id="d-cards"><div class="empty-state"><i class="fas fa-mug-hot"></i><p>No tasks assigned yet ☕</p></div></div>
+    </div>
+    <div id="d-panel-done" style="display:none">
+      <div id="d-done"><div class="empty-state"><i class="fas fa-medal"></i><p>Completed tasks will appear here</p></div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ MODALS ══ -->
+<div class="modal-bg" id="m-edit">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3><i class="fas fa-pen-to-square"></i> Edit Task</h3>
+      <button class="modal-x" onclick="closeM('m-edit')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <input type="hidden" id="e-id"/>
+    <div class="fg"><label class="fl">Staff Member</label>
+      <div class="select-wrap"><select id="e-staff" class="fi"></select><i class="fas fa-chevron-down select-arrow"></i></div>
+    </div>
+    <div class="fg"><label class="fl">Task Description</label>
+      <textarea id="e-desc" class="fi" rows="3" style="resize:vertical"></textarea>
+    </div>
+    <div class="two-col">
+      <div class="fg"><label class="fl">Priority</label>
+        <div class="select-wrap"><select id="e-prio" class="fi"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select><i class="fas fa-chevron-down select-arrow"></i></div>
+      </div>
+      <div class="fg"><label class="fl">Status</label>
+        <div class="select-wrap"><select id="e-status" class="fi"><option value="pending">Pending</option><option value="inprogress">In Progress</option><option value="done">Done</option></select><i class="fas fa-chevron-down select-arrow"></i></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="ghost-btn" onclick="closeM('m-edit')">Cancel</button>
+      <button class="sub-btn sm" onclick="saveEdit()"><i class="fas fa-check"></i> Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-del">
+  <div class="modal-box sm-modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-trash"></i> Delete Task</h3>
+      <button class="modal-x" onclick="closeM('m-del')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <p class="modal-body-txt">Permanently delete this task? This cannot be undone.</p>
+    <input type="hidden" id="del-id"/>
+    <div class="modal-ft">
+      <button class="ghost-btn" onclick="closeM('m-del')">Cancel</button>
+      <button class="danger-btn" onclick="confirmDel()"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-rmstaff">
+  <div class="modal-box sm-modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-user-minus"></i> Remove Staff</h3>
+      <button class="modal-x" onclick="closeM('m-rmstaff')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <p class="modal-body-txt" id="rms-msg">Remove this staff member?</p>
+    <input type="hidden" id="rms-id"/>
+    <div class="modal-ft">
+      <button class="ghost-btn" onclick="closeM('m-rmstaff')">Cancel</button>
+      <button class="danger-btn" onclick="confirmRmS()"><i class="fas fa-user-minus"></i> Remove</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<script src="app.js"></script>
+</body>
+</html>
