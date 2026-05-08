@@ -19,7 +19,7 @@
 /* ══════════════════════════════════════════════════════════════
    🔗 STEP 1: PASTE YOUR APPS SCRIPT URL HERE
 ══════════════════════════════════════════════════════════════ */
-const API_URL = "https://script.googleusercontent.com/a/macros/raghuvirsweets.co.in/echo?user_content_key=AUkAhnRKk2WvkyDLI3EEqILLT-nonqQ2bJoyZvaDAnE3Dko3eoUEjR_te1VYZsrufkTpGSazPI2joDsQxVT8kfkzwydefdNMWG6_A40C9zib2jUviuWgA5k8eId1z6oisWolgrCSvARYQufbp2gIzZw00dUBRzi9nbQKAmfapxhISCGWgOn71b0ZtTX7SmRj2pffbvN46bL8tAokBbgxbp73qWa4FU4_507jFLWNs4msDjKfP7e6pfAlCq5VYC8dGeZzG_i9BZGbx97zKAD0Ul1B_smaoaUYJZQFQllSVHLr3ngLUDKBDvumkzshM7revg&lib=MA4yrfDLcocqkZiMpYwGODaHCuGx0Es3s";
+const API_URL = "https://script.google.com/macros/s/AKfycbywfjsKdUhdnh1ul7j6m5hGK96m1oFvpo6N9BVHIGp1U02vNodWiPN9cSFoFtSiwlh8/exec";
 
 /* ══════════════════════════════════════════════════════════════
    🖼️  STEP 2: BRAND LOGO URL
