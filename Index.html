@@ -149,6 +149,30 @@
   </div>
 
   <div class="login-right">
+
+    <!-- ── INSTALL BANNER — shows on Android Chrome automatically ── -->
+    <div id="install-banner" style="display:none">
+      <div class="inst-banner-inner">
+        <div class="inst-banner-left">
+          <div class="inst-banner-icon" id="inst-banner-icon">
+            <i class="fas fa-store-alt"></i>
+          </div>
+          <div class="inst-banner-text">
+            <span class="inst-banner-title">Install RSB Tasks</span>
+            <span class="inst-banner-sub">Home screen pe add karein · Free · Offline</span>
+          </div>
+        </div>
+        <div class="inst-banner-actions">
+          <button class="inst-install-btn" id="inst-install-btn" onclick="bannerInstall()">
+            <i class="fas fa-download"></i> Install
+          </button>
+          <button class="inst-close-btn" onclick="bannerDismiss()" title="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="login-form-box">
 
       <div class="mob-brand-hd">
