@@ -284,7 +284,7 @@ function doLogin(){
       if(isEmail){
         return showErr("l-err","No account found with this email. Please register first.");
       } else {
-        return showErr("l-err","Name not found. Please check spelling or use your email.");
+        return showErr("l-err","Name not found. Please type your exact name as registered, or enter your email address instead.");
       }
     }
     if(String(doer.password).trim()!==String(pass).trim()){
@@ -655,6 +655,9 @@ document.addEventListener("DOMContentLoaded",async()=>{
     return;
   }
 
+  // Install banner is shown automatically by beforeinstallprompt event
+  // (fires on Android Chrome on HTTPS — no manual trigger needed)
+
   // Check persistent session
   const sess=Session.get();
   if(sess){
@@ -686,14 +689,18 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 
 /* ══════════════════════════════════════════════════════════════
-   PWA
+   PWA — Service Worker + Install Banner
+   Banner shows on login page on Android Chrome automatically.
+   No separate splash — install option is part of login screen.
 ══════════════════════════════════════════════════════════════ */
-const _SW=`const CV="rsb-v6",RV="rsb-rt-v3";const SHELL=["./","./index.html","./style.css","./app.js"];const CDN=["fonts.googleapis.com","fonts.gstatic.com","cdn.jsdelivr.net","cdnjs.cloudflare.com"];self.addEventListener("install",e=>{e.waitUntil(caches.open(CV).then(c=>c.addAll(SHELL).catch(()=>{})).then(()=>self.skipWaiting()))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CV&&k!==RV).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener("fetch",e=>{const req=e.request,url=new URL(req.url);if(req.method!=="GET"||url.protocol==="chrome-extension:")return;if(CDN.some(h=>url.hostname.includes(h))){e.respondWith(caches.match(req).then(c=>c||fetch(req).then(r=>{if(r.ok)caches.open(RV).then(cache=>cache.put(req,r.clone()));return r}).catch(()=>new Response("",{status:408}))));return}if(url.origin===self.location.origin){e.respondWith(caches.match(req).then(cached=>{const nw=fetch(req).then(r=>{if(r.ok)caches.open(CV).then(c=>c.put(req,r.clone()));return r}).catch(()=>null);return cached||nw||new Response("Offline",{status:503})}))}});self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});`;
+const _SW=`const CV="rsb-v7",RV="rsb-rt-v4";const SHELL=["./","./index.html","./style.css","./app.js"];const CDN=["fonts.googleapis.com","fonts.gstatic.com","cdn.jsdelivr.net","cdnjs.cloudflare.com","script.google.com"];self.addEventListener("install",e=>{e.waitUntil(caches.open(CV).then(c=>c.addAll(SHELL).catch(()=>{})).then(()=>self.skipWaiting()))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CV&&k!==RV).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener("fetch",e=>{const req=e.request,url=new URL(req.url);if(req.method!=="GET"||url.protocol==="chrome-extension:")return;if(CDN.some(h=>url.hostname.includes(h))||url.hostname.includes("google")){e.respondWith(fetch(req).catch(()=>caches.match(req)||new Response("",{status:408})));return}if(url.origin===self.location.origin){e.respondWith(caches.match(req).then(cached=>{const nw=fetch(req).then(r=>{if(r.ok)caches.open(CV).then(c=>c.put(req,r.clone()));return r}).catch(()=>null);return cached||nw||new Response("Offline",{status:503})}))}});self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});`;
 
-let _installPrompt=null;window._pwaInstallReady=false;
+let _installPrompt=null;
+window._pwaInstallReady=false;
 
+/* ── Service Worker ── */
 async function initSW(){
-  if(!("serviceWorker"in navigator))return;
+  if(!("serviceWorker" in navigator))return;
   try{
     const blob=new Blob([_SW],{type:"application/javascript"});
     const reg=await navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:"./"});
@@ -701,39 +708,124 @@ async function initSW(){
   }catch(e){console.warn("[SW]",e.message);}
 }
 
+/* ── beforeinstallprompt — fires on Android Chrome on HTTPS ──
+   This is the key event. Chrome holds the install prompt until
+   criteria are met (SW registered, HTTPS, not already installed).
+   We capture it and show our banner immediately. */
 window.addEventListener("beforeinstallprompt",e=>{
-  e.preventDefault();_installPrompt=e;window._pwaInstallReady=true;
-  const choice=localStorage.getItem("rsb_choice");
-  if(!choice&&!isStandalone()){setTimeout(()=>{$("app-choice-splash").style.display="flex";},400);}
-  if(choice==="web")showInstallUI();
-  applyLogo(); // re-apply logo to splash if it just appeared
-});
-window.addEventListener("appinstalled",()=>{
-  _installPrompt=null;window._pwaInstallReady=false;
-  $("app-choice-splash").style.display="none";
-  localStorage.setItem("rsb_choice","app");
-  hideInstallUI();
-  toast("App installed! Open from your home screen 🎉","ok",6000);
+  e.preventDefault();
+  _installPrompt=e;
+  window._pwaInstallReady=true;
+
+  // Show install banner on login page
+  showInstallBanner();
+
+  // Also show install buttons in sidebar/header (for logged-in users)
+  showInstallUI();
+
+  // Apply logo to banner icon
+  if(BRAND_LOGO_URL.trim()){
+    const ic=$("inst-banner-icon");
+    if(ic) ic.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:8px"/>`;
+  }
 });
 
-async function chooseApp(){
-  if(!_installPrompt){localStorage.setItem("rsb_choice","web");$("app-choice-splash").style.display="none";return;}
-  const btn=$("sc-app-btn");
-  if(btn){btn.querySelector(".sc-main").textContent="Installing…";btn.disabled=true;}
+/* ── App installed event ── */
+window.addEventListener("appinstalled",()=>{
+  _installPrompt=null;window._pwaInstallReady=false;
+  hideInstallBanner();
+  hideInstallUI();
+  localStorage.setItem("rsb_installed","1");
+  toast("App installed! 🎉 Home screen se open karein","ok",6000);
+});
+
+/* ── Show / hide banner ── */
+function showInstallBanner(){
+  if(isStandalone())return; // Already running as app
+  if(localStorage.getItem("rsb_installed"))return; // Already installed
+  const b=$("install-banner");
+  if(b) b.style.display="block";
+}
+function hideInstallBanner(){
+  const b=$("install-banner");
+  if(b) b.style.display="none";
+}
+
+/* ── Banner Install button tapped ── */
+async function bannerInstall(){
+  const btn=$("inst-install-btn");
+  if(!_installPrompt){
+    // Prompt not ready yet — show manual instructions
+    const isAndroid=/android/i.test(navigator.userAgent);
+    if(isAndroid){
+      toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
+    } else {
+      toast("Browser menu → 'Install App' ya 'Add to Home Screen' tap karein","info",7000);
+    }
+    return;
+  }
+  if(btn){btn.innerHTML=`<i class="fas fa-spinner fa-spin"></i> Installing…`;btn.disabled=true;}
   _installPrompt.prompt();
   const{outcome}=await _installPrompt.userChoice;
-  if(outcome==="accepted"){_installPrompt=null;window._pwaInstallReady=false;localStorage.setItem("rsb_choice","app");$("app-choice-splash").style.display="none";hideInstallUI();}
-  else{if(btn){btn.querySelector(".sc-main").textContent="Use as App";btn.disabled=false;}localStorage.setItem("rsb_choice","web");$("app-choice-splash").style.display="none";}
+  if(outcome==="accepted"){
+    _installPrompt=null;window._pwaInstallReady=false;
+    hideInstallBanner();
+    hideInstallUI();
+  } else {
+    // User cancelled — restore button
+    if(btn){btn.innerHTML=`<i class="fas fa-download"></i> Install`;btn.disabled=false;}
+  }
 }
-function chooseWeb(){localStorage.setItem("rsb_choice","web");$("app-choice-splash").style.display="none";if(window._pwaInstallReady)showInstallUI();}
+
+/* ── Banner dismiss (X button) ── */
+function bannerDismiss(){
+  hideInstallBanner();
+  // Remember for this session only (not permanently — show again next visit)
+  sessionStorage.setItem("banner_dismissed","1");
+}
+
+/* ── Install from sidebar/topbar button ── */
 async function installPWA(){
-  if(_installPrompt){_installPrompt.prompt();const{outcome}=await _installPrompt.userChoice;if(outcome==="accepted"){_installPrompt=null;window._pwaInstallReady=false;localStorage.setItem("rsb_choice","app");hideInstallUI();}}
-  else if(isStandalone())toast("App is already installed! ✅","ok");
-  else toast("Open in Chrome on Android to install.","info",6000);
+  if(_installPrompt){
+    _installPrompt.prompt();
+    const{outcome}=await _installPrompt.userChoice;
+    if(outcome==="accepted"){
+      _installPrompt=null;window._pwaInstallReady=false;
+      hideInstallBanner();hideInstallUI();
+    }
+  } else if(isStandalone()){
+    toast("App already installed! ✅","ok");
+  } else {
+    const isAndroid=/android/i.test(navigator.userAgent);
+    if(isAndroid){
+      toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
+    } else {
+      toast("Browser menu → 'Install App' tap karein","info",7000);
+    }
+  }
 }
-function showInstallUI(){[$("login-install-row"),$("sb-install-row")].forEach(e=>{if(e)e.style.display="block";});[$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="flex";});}
-function hideInstallUI(){[$("login-install-row"),$("sb-install-row")].forEach(e=>{if(e)e.style.display="none";});[$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="none";});}
-function isStandalone(){return window.matchMedia("(display-mode:standalone)").matches||navigator.standalone===true;}
+
+/* ── Splash screen buttons (kept for backward compat) ── */
+async function chooseApp(){ await bannerInstall(); }
+function chooseWeb(){
+  const s=$("app-choice-splash");
+  if(s)s.style.display="none";
+  hideInstallBanner();
+}
+
+/* ── Sidebar/header install buttons ── */
+function showInstallUI(){
+  [$("sb-install-row")].forEach(e=>{if(e)e.style.display="block";});
+  [$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="flex";});
+}
+function hideInstallUI(){
+  [$("sb-install-row")].forEach(e=>{if(e)e.style.display="none";});
+  [$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="none";});
+}
+
+function isStandalone(){
+  return window.matchMedia("(display-mode:standalone)").matches||navigator.standalone===true;
+}
 
 Object.assign(window,{
   switchTab,doLogin,doRegister,doLogout,toggleEye,toggleAdminLogin,
@@ -742,5 +834,6 @@ Object.assign(window,{
   dTab,dStart,dDone,
   exportExcel,
   installPWA,chooseApp,chooseWeb,
+  bannerInstall,bannerDismiss,
 });
 console.log("%c 🍬 Raghuvir Sweets And Bakers ","background:#c0392b;color:#fff;font-size:13px;font-weight:bold;padding:4px 10px;border-radius:6px");
