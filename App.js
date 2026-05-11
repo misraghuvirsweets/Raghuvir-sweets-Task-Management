@@ -655,8 +655,13 @@ document.addEventListener("DOMContentLoaded",async()=>{
     return;
   }
 
-  // Install banner is shown automatically by beforeinstallprompt event
-  // (fires on Android Chrome on HTTPS — no manual trigger needed)
+  // ── Show splash on first visit ──
+  // Splash shows "Use App" / "Use as Website" choice to user.
+  // It shows on every first visit until user makes a choice.
+  // isStandalone() = already running as installed app → skip splash.
+  if(shouldShowSplash()){
+    setTimeout(()=>showSplash(), 300);
+  }
 
   // Check persistent session
   const sess=Session.get();
@@ -689,14 +694,20 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 
 /* ══════════════════════════════════════════════════════════════
-   PWA — Service Worker + Install Banner
-   Banner shows on login page on Android Chrome automatically.
-   No separate splash — install option is part of login screen.
+   PWA — Service Worker + Splash + Install Banner
+   Flow:
+   1. Page opens → if first visit & not installed → show SPLASH
+   2. Splash has "Use App" + "Use as Website" buttons
+   3. beforeinstallprompt fires → capture it
+   4. "Use App" tapped → trigger native install OR show instructions
+   5. "Use as Website" → dismiss splash, go to login
+   6. After choice → show login page
+   7. Install banner shows on login for users who chose website earlier
 ══════════════════════════════════════════════════════════════ */
-const _SW=`const CV="rsb-v7",RV="rsb-rt-v4";const SHELL=["./","./Index.html","./Style.css","./App.js"];const CDN=["fonts.googleapis.com","fonts.gstatic.com","cdn.jsdelivr.net","cdnjs.cloudflare.com","script.google.com"];self.addEventListener("install",e=>{e.waitUntil(caches.open(CV).then(c=>c.addAll(SHELL).catch(()=>{})).then(()=>self.skipWaiting()))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CV&&k!==RV).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener("fetch",e=>{const req=e.request,url=new URL(req.url);if(req.method!=="GET"||url.protocol==="chrome-extension:")return;if(CDN.some(h=>url.hostname.includes(h))||url.hostname.includes("google")){e.respondWith(fetch(req).catch(()=>caches.match(req)||new Response("",{status:408})));return}if(url.origin===self.location.origin){e.respondWith(caches.match(req).then(cached=>{const nw=fetch(req).then(r=>{if(r.ok)caches.open(CV).then(c=>c.put(req,r.clone()));return r}).catch(()=>null);return cached||nw||new Response("Offline",{status:503})}))}});self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});`;
+const _SW=`const CV="rsb-v8",RV="rsb-rt-v5";const SHELL=["./","./Index.html","./Style.css","./App.js"];const CDN=["fonts.googleapis.com","fonts.gstatic.com","cdn.jsdelivr.net","cdnjs.cloudflare.com","script.google.com"];self.addEventListener("install",e=>{e.waitUntil(caches.open(CV).then(c=>c.addAll(SHELL).catch(()=>{})).then(()=>self.skipWaiting()))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CV&&k!==RV).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener("fetch",e=>{const req=e.request,url=new URL(req.url);if(req.method!=="GET"||url.protocol==="chrome-extension:")return;if(CDN.some(h=>url.hostname.includes(h))||url.hostname.includes("google")){e.respondWith(fetch(req).catch(()=>caches.match(req)||new Response("",{status:408})));return}if(url.origin===self.location.origin){e.respondWith(caches.match(req).then(cached=>{const nw=fetch(req).then(r=>{if(r.ok)caches.open(CV).then(c=>c.put(req,r.clone()));return r}).catch(()=>null);return cached||nw||new Response("Offline",{status:503})}))}});self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});`;
 
-let _installPrompt=null;
-window._pwaInstallReady=false;
+let _installPrompt = null;
+window._pwaInstallReady = false;
 
 /* ── Service Worker ── */
 async function initSW(){
@@ -708,41 +719,144 @@ async function initSW(){
   }catch(e){console.warn("[SW]",e.message);}
 }
 
-/* ── beforeinstallprompt — fires on Android Chrome on HTTPS ──
-   This is the key event. Chrome holds the install prompt until
-   criteria are met (SW registered, HTTPS, not already installed).
-   We capture it and show our banner immediately. */
+/* ══ SPLASH SCREEN LOGIC ══
+   Shows full-screen "Use App / Use as Website" on first visit.
+   Remembers choice in localStorage so it never shows again
+   once the user has decided. */
+
+function shouldShowSplash(){
+  if(isStandalone())return false;                    // already running as installed app
+  if(localStorage.getItem("rsb_choice"))return false;// already chose before
+  return true;
+}
+
+function showSplash(){
+  const s=$("app-choice-splash");
+  if(s){ s.style.display="flex"; }
+  // Apply logo inside phone mockup
+  if(BRAND_LOGO_URL.trim()){
+    const pl=$("ph-logo-el");
+    if(pl) pl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:4px"/>`;
+    const sl=$("splash-logo");
+    if(sl) sl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:12px"/>`;
+  }
+}
+
+function hideSplash(){
+  const s=$("app-choice-splash");
+  if(s) s.style.display="none";
+}
+
+/* ── "Use App" button on splash ── */
+async function chooseApp(){
+  const btn=$("sc-app-btn");
+  const mainTxt = btn ? btn.querySelector(".sib-main") : null;
+  const subTxt  = btn ? btn.querySelector(".sib-sub")  : null;
+
+  if(_installPrompt){
+    /* Native prompt ready — trigger it */
+    if(mainTxt) mainTxt.textContent="Installing…";
+    if(btn) btn.disabled=true;
+
+    _installPrompt.prompt();
+    const{outcome}=await _installPrompt.userChoice;
+
+    if(outcome==="accepted"){
+      /* User accepted install */
+      _installPrompt=null; window._pwaInstallReady=false;
+      localStorage.setItem("rsb_choice","app");
+      hideSplash();
+      hideInstallBanner();
+      hideInstallUI();
+      /* Login screen already visible behind splash */
+    } else {
+      /* User cancelled — reset button, stay on splash */
+      if(mainTxt) mainTxt.textContent="Use App";
+      if(subTxt)  subTxt.textContent="Add to home screen · Works offline";
+      if(btn) btn.disabled=false;
+    }
+  } else {
+    /* Prompt not yet fired (may come shortly) — show instructions & dismiss */
+    localStorage.setItem("rsb_choice","web");
+    hideSplash();
+    const isAndroid=/android/i.test(navigator.userAgent);
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    if(isIOS){
+      setTimeout(()=>toast("iPhone pe: Share (□↑) tap karein → 'Add to Home Screen'","info",9000),400);
+    } else if(isAndroid){
+      setTimeout(()=>toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",9000),400);
+    } else {
+      setTimeout(()=>toast("Browser menu → 'Install App' tap karein","info",9000),400);
+    }
+    /* Show install banner on login so they can try again */
+    setTimeout(()=>showInstallBanner(),500);
+  }
+}
+
+/* ── "Use as Website" button on splash ── */
+function chooseWeb(){
+  localStorage.setItem("rsb_choice","web");
+  hideSplash();
+  /* Show small install banner on login page as reminder */
+  if(window._pwaInstallReady) setTimeout(()=>showInstallBanner(),300);
+}
+
+/* ══ beforeinstallprompt ══
+   Fires on Android Chrome on HTTPS when app is installable.
+   We capture it so chooseApp() can trigger it on demand. */
 window.addEventListener("beforeinstallprompt",e=>{
   e.preventDefault();
   _installPrompt=e;
   window._pwaInstallReady=true;
 
-  // Show install banner on login page
-  showInstallBanner();
+  /* Update "Use App" button text to show it's ready */
+  const btn=$("sc-app-btn");
+  if(btn){
+    const sub=btn.querySelector(".sib-sub");
+    if(sub) sub.textContent="Ek tap mein install karein!";
+  }
 
-  // Also show install buttons in sidebar/header (for logged-in users)
-  showInstallUI();
+  /* If splash is visible — update it */
+  const splash=$("app-choice-splash");
+  const splashVisible = splash && splash.style.display!=="none";
 
-  // Apply logo to banner icon
+  /* If splash already dismissed & user chose "web" — show banner on login */
+  const choice=localStorage.getItem("rsb_choice");
+  if(choice==="web"){
+    showInstallBanner();
+    showInstallUI();
+  }
+
+  /* Apply logo to banner icon */
   if(BRAND_LOGO_URL.trim()){
     const ic=$("inst-banner-icon");
     if(ic) ic.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:8px"/>`;
+    /* Also update splash logo if visible */
+    if(splashVisible){
+      const sl=$("splash-logo");
+      if(sl) sl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:12px"/>`;
+    }
   }
 });
 
-/* ── App installed event ── */
+/* ── App installed ── */
 window.addEventListener("appinstalled",()=>{
-  _installPrompt=null;window._pwaInstallReady=false;
+  _installPrompt=null; window._pwaInstallReady=false;
+  localStorage.setItem("rsb_choice","app");
+  localStorage.setItem("rsb_installed","1");
+  hideSplash();
   hideInstallBanner();
   hideInstallUI();
-  localStorage.setItem("rsb_installed","1");
-  toast("App installed! 🎉 Home screen se open karein","ok",6000);
+  toast("App install ho gaya! 🎉 Home screen se open karein","ok",6000);
 });
 
-/* ── Show / hide banner ── */
+/* ══ INSTALL BANNER (login page top) ══
+   Small banner shown on login page when:
+   - User chose "Use as Website" on splash but prompt is ready
+   - User dismissed splash and prompt fired later */
 function showInstallBanner(){
-  if(isStandalone())return; // Already running as app
-  if(localStorage.getItem("rsb_installed"))return; // Already installed
+  if(isStandalone())return;
+  if(localStorage.getItem("rsb_installed"))return;
   const b=$("install-banner");
   if(b) b.style.display="block";
 }
@@ -751,80 +865,62 @@ function hideInstallBanner(){
   if(b) b.style.display="none";
 }
 
-/* ── Banner Install button tapped ── */
+/* ── Banner "Install" button ── */
 async function bannerInstall(){
   const btn=$("inst-install-btn");
   if(!_installPrompt){
-    // Prompt not ready yet — show manual instructions
     const isAndroid=/android/i.test(navigator.userAgent);
-    if(isAndroid){
-      toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
-    } else {
-      toast("Browser menu → 'Install App' ya 'Add to Home Screen' tap karein","info",7000);
-    }
+    if(isAndroid) toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
+    else           toast("Browser menu → 'Install App' tap karein","info",7000);
     return;
   }
   if(btn){btn.innerHTML=`<i class="fas fa-spinner fa-spin"></i> Installing…`;btn.disabled=true;}
   _installPrompt.prompt();
   const{outcome}=await _installPrompt.userChoice;
   if(outcome==="accepted"){
-    _installPrompt=null;window._pwaInstallReady=false;
-    hideInstallBanner();
-    hideInstallUI();
+    _installPrompt=null; window._pwaInstallReady=false;
+    localStorage.setItem("rsb_choice","app");
+    hideInstallBanner(); hideInstallUI();
   } else {
-    // User cancelled — restore button
     if(btn){btn.innerHTML=`<i class="fas fa-download"></i> Install`;btn.disabled=false;}
   }
 }
 
-/* ── Banner dismiss (X button) ── */
+/* ── Banner dismiss ── */
 function bannerDismiss(){
   hideInstallBanner();
-  // Remember for this session only (not permanently — show again next visit)
-  sessionStorage.setItem("banner_dismissed","1");
 }
 
-/* ── Install from sidebar/topbar button ── */
+/* ── Sidebar/topbar Install button ── */
 async function installPWA(){
   if(_installPrompt){
     _installPrompt.prompt();
     const{outcome}=await _installPrompt.userChoice;
     if(outcome==="accepted"){
-      _installPrompt=null;window._pwaInstallReady=false;
-      hideInstallBanner();hideInstallUI();
+      _installPrompt=null; window._pwaInstallReady=false;
+      localStorage.setItem("rsb_choice","app");
+      hideInstallBanner(); hideInstallUI();
     }
   } else if(isStandalone()){
     toast("App already installed! ✅","ok");
   } else {
     const isAndroid=/android/i.test(navigator.userAgent);
-    if(isAndroid){
-      toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
-    } else {
-      toast("Browser menu → 'Install App' tap karein","info",7000);
-    }
+    if(isAndroid) toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
+    else           toast("Browser menu → 'Install App' tap karein","info",7000);
   }
 }
 
-/* ── Splash screen buttons (kept for backward compat) ── */
-async function chooseApp(){ await bannerInstall(); }
-function chooseWeb(){
-  const s=$("app-choice-splash");
-  if(s)s.style.display="none";
-  hideInstallBanner();
-}
-
-/* ── Sidebar/header install buttons ── */
 function showInstallUI(){
-  [$("sb-install-row")].forEach(e=>{if(e)e.style.display="block";});
+  const s=$("sb-install-row"); if(s) s.style.display="block";
   [$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="flex";});
 }
 function hideInstallUI(){
-  [$("sb-install-row")].forEach(e=>{if(e)e.style.display="none";});
+  const s=$("sb-install-row"); if(s) s.style.display="none";
   [$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="none";});
 }
 
 function isStandalone(){
-  return window.matchMedia("(display-mode:standalone)").matches||navigator.standalone===true;
+  return window.matchMedia("(display-mode:standalone)").matches || navigator.standalone===true;
 }
 
 Object.assign(window,{
@@ -834,6 +930,6 @@ Object.assign(window,{
   dTab,dStart,dDone,
   exportExcel,
   installPWA,chooseApp,chooseWeb,
-  bannerInstall,bannerDismiss,
+  bannerInstall,bannerDismiss,showSplash,hideSplash,
 });
 console.log("%c 🍬 Raghuvir Sweets And Bakers ","background:#c0392b;color:#fff;font-size:13px;font-weight:bold;padding:4px 10px;border-radius:6px");
