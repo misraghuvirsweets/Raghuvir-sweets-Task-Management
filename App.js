@@ -19,7 +19,7 @@
 /* ══════════════════════════════════════════════════════════════
    🔗 STEP 1: PASTE YOUR APPS SCRIPT URL HERE
 ══════════════════════════════════════════════════════════════ */
-const API_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL";
+const API_URL = "https://script.google.com/macros/s/AKfycbywfjsKdUhdnh1ul7j6m5hGK96m1oFvpo6N9BVHIGp1U02vNodWiPN9cSFoFtSiwlh8/exec";
 
 /* ══════════════════════════════════════════════════════════════
    🖼️  STEP 2: BRAND LOGO URL
