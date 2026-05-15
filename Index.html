@@ -105,23 +105,58 @@
         <div class="splash-feat"><i class="fas fa-file-excel"></i> Excel export</div>
       </div>
 
-      <div class="splash-actions">
+      <!-- Android Chrome button (shown by default) -->
+      <div class="splash-actions" id="android-actions">
         <button class="splash-install-btn" id="sc-app-btn" onclick="chooseApp()">
           <div class="sib-icon"><i class="fas fa-download"></i></div>
           <div class="sib-text">
-            <span class="sib-main">Install App</span>
-            <span class="sib-sub">Add to home screen · Free forever</span>
+            <span class="sib-main">Use as App</span>
+            <span class="sib-sub">Home screen pe install karein · Free</span>
           </div>
           <i class="fas fa-chevron-right sib-arr"></i>
         </button>
-
         <button class="splash-web-btn" onclick="chooseWeb()">
           <i class="fas fa-globe"></i>
-          <span>Continue in Browser</span>
+          <span>Use as Website</span>
         </button>
       </div>
 
-      <p class="splash-note">You can install anytime from the menu</p>
+      <!-- iPhone / iOS Safari instructions (shown on iOS) -->
+      <div class="splash-actions" id="ios-actions" style="display:none">
+        <div class="ios-steps-card">
+          <div class="ios-steps-title">
+            <i class="fab fa-apple"></i> iPhone pe Install Karna
+          </div>
+          <div class="ios-step">
+            <div class="ios-step-num">1</div>
+            <div class="ios-step-txt">
+              Neeche Safari toolbar mein
+              <strong>Share button</strong>
+              <span class="ios-share-icon"><i class="fas fa-arrow-up-from-bracket"></i></span>
+              tap karein
+            </div>
+          </div>
+          <div class="ios-step">
+            <div class="ios-step-num">2</div>
+            <div class="ios-step-txt">
+              Menu mein <strong>"Add to Home Screen"</strong> dhundein aur tap karein
+            </div>
+          </div>
+          <div class="ios-step">
+            <div class="ios-step-num">3</div>
+            <div class="ios-step-txt">
+              Upar-right mein <strong>"Add"</strong> tap karein — Done! 🎉
+            </div>
+          </div>
+        </div>
+        <button class="splash-web-btn" onclick="chooseWeb()">
+          <i class="fas fa-globe"></i>
+          <span>Abhi nahi, Website use karein</span>
+        </button>
+      </div>
+
+      <p class="splash-note" id="splash-note-android">Install karein ya browser mein chalayein — dono free hai</p>
+      <p class="splash-note" id="splash-note-ios" style="display:none">Safari mein kholein toh install option milega</p>
     </div>
 
   </div>
@@ -319,6 +354,19 @@
         <span class="sl-ic"><i class="fas fa-file-excel"></i></span><span class="sl-tx">Export Excel</span>
       </a>
     </nav>
+
+    <!-- ── External Links Section (Admin only) ── -->
+    <div id="sb-ext-links" style="display:none;padding:6px 10px 0">
+      <!-- Rendered by renderExternalLinks() in App.js -->
+    </div>
+
+    <!-- ── Manage Links Button ── -->
+    <div id="sb-manage-links-row" style="padding:4px 10px 0">
+      <button class="sb-manage-btn" onclick="openManageLinks()">
+        <i class="fas fa-plus-circle"></i> Manage Quick Links
+      </button>
+    </div>
+
     <div id="sb-install-row" style="display:none;padding:10px 14px 0">
       <button class="sb-install-btn" onclick="installPWA()"><i class="fas fa-download"></i> Install App</button>
     </div>
@@ -580,6 +628,30 @@
     <div class="modal-ft">
       <button class="ghost-btn" onclick="closeM('m-rmstaff')">Cancel</button>
       <button class="danger-btn" onclick="confirmRmS()"><i class="fas fa-user-minus"></i> Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MANAGE LINKS MODAL ══ -->
+<div class="modal-bg" id="m-links">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-hd">
+      <h3><i class="fas fa-link"></i> Manage Quick Links</h3>
+      <button class="modal-x" onclick="closeM('m-links')"><i class="fas fa-xmark"></i></button>
+    </div>
+    <p style="font-size:.82rem;color:var(--ts);margin-bottom:16px;line-height:1.5">
+      These links appear in your Admin sidebar for quick access.
+      Add any link — Google Sheet, WhatsApp, custom system, etc.
+    </p>
+    <div id="links-list">
+      <!-- Rendered by renderLinksEditor() -->
+    </div>
+    <button class="add-link-btn" onclick="addLinkRow()">
+      <i class="fas fa-plus"></i> Add New Link
+    </button>
+    <div class="modal-ft" style="margin-top:18px">
+      <button class="ghost-btn" onclick="closeM('m-links')">Cancel</button>
+      <button class="sub-btn sm" onclick="saveLinks()"><i class="fas fa-check"></i> Save Links</button>
     </div>
   </div>
 </div>
