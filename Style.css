@@ -844,3 +844,245 @@ textarea.fi{resize:vertical;min-height:100px;line-height:1.55}
   .inst-banner-sub { display: none; }
   .inst-install-btn { padding: 7px 12px; font-size: .75rem; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   iOS INSTALL INSTRUCTIONS — Splash screen
+══════════════════════════════════════════════════════════ */
+#ios-actions { flex-direction: column; gap: 12px; }
+#android-actions { flex-direction: column; gap: 10px; }
+
+.ios-steps-card {
+  background: rgba(255,255,255,.12);
+  border: 1.5px solid rgba(255,255,255,.22);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+}
+.ios-steps-title {
+  font-size: .88rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ios-steps-title i { color: #f0c040; font-size: 1rem; }
+
+.ios-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ios-step:last-child { margin-bottom: 0; }
+
+.ios-step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(192,57,43,.4);
+}
+.ios-step-txt {
+  font-size: .82rem;
+  color: rgba(255,255,255,.88);
+  line-height: 1.5;
+  padding-top: 3px;
+}
+.ios-step-txt strong { color: #fff; font-weight: 700; }
+
+.ios-share-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  background: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 6px;
+  font-size: .7rem;
+  color: #fff;
+  margin: 0 2px;
+  vertical-align: middle;
+}
+
+/* Safe area on iPhone X+ (notch + home bar) */
+@supports(padding: max(0px)){
+  @media(display-mode: standalone){
+    .d-header { padding-top: max(12px, env(safe-area-inset-top)); height: auto; min-height: 58px; }
+    .a-topbar { padding-top: max(0px, env(safe-area-inset-top)); height: auto; min-height: 55px; }
+    .splash-overlay { padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+    #toasts { bottom: max(20px, env(safe-area-inset-bottom)); }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   EXTERNAL QUICK LINKS — Admin Sidebar
+══════════════════════════════════════════════════════════ */
+.sb-ext-label {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tm);
+  padding: 8px 11px 4px;
+}
+.sl-ext {
+  color: var(--ts);
+  font-size: .84rem;
+}
+.sl-ext:hover { background: var(--bg-hover); color: var(--t); }
+.sl-ext-ico {
+  font-size: .6rem;
+  color: var(--tm);
+  opacity: .6;
+  flex-shrink: 0;
+}
+
+/* Manage Links button */
+.sb-manage-btn {
+  width: 100%;
+  background: none;
+  border: 1.5px dashed var(--bdr2);
+  border-radius: var(--rsm);
+  color: var(--tm);
+  font-family: var(--fb);
+  font-size: .76rem;
+  font-weight: 600;
+  padding: 8px 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: all var(--tr);
+  margin-bottom: 6px;
+}
+.sb-manage-btn:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-lt);
+}
+.sb-manage-btn i { font-size: .78rem; }
+
+/* ══════════════════════════════════════════════════════════
+   MANAGE LINKS MODAL
+══════════════════════════════════════════════════════════ */
+.link-row {
+  background: var(--bg-subtle);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--rsm);
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: border-color var(--tr);
+}
+.link-row:hover { border-color: var(--bdr2); }
+
+.link-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.link-label-inp { flex: 1; font-size: .875rem; }
+.link-url-inp { font-size: .82rem; font-family: var(--fm); }
+.link-row-url { margin-bottom: 4px; }
+
+.link-icon-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--bdr);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--tr);
+}
+.link-icon-btn:hover {
+  border-color: var(--red);
+  background: var(--red-lt);
+}
+
+.link-del-btn {
+  width: 34px; height: 34px;
+  background: none;
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--rxs);
+  color: var(--danger);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem;
+  flex-shrink: 0;
+  transition: all var(--tr);
+}
+.link-del-btn:hover { background: var(--dng-bg); border-color: var(--dng-bdr); }
+
+/* Icon picker */
+.icon-picker {
+  background: var(--bg-card);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--rsm);
+  padding: 10px;
+  margin-top: 6px;
+}
+.ip-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.ip-icon-btn {
+  width: 34px; height: 34px;
+  background: var(--bg);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--rxs);
+  color: var(--ts);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .82rem;
+  transition: all var(--tr);
+}
+.ip-icon-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-lt); }
+.ip-icon-btn.ip-sel { border-color: var(--red); background: var(--red); color: #fff; }
+
+.ip-colors { display: flex; flex-wrap: wrap; gap: 6px; }
+.ip-color-btn {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform var(--tr), border-color var(--tr);
+}
+.ip-color-btn:hover { transform: scale(1.2); }
+.ip-color-btn.ip-col-sel { border-color: var(--t); transform: scale(1.15); }
+
+.add-link-btn {
+  width: 100%;
+  background: var(--bg-subtle);
+  border: 1.5px dashed var(--bdr2);
+  border-radius: var(--rsm);
+  color: var(--ts);
+  font-family: var(--fb);
+  font-size: .84rem;
+  font-weight: 600;
+  padding: 11px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all var(--tr);
+  margin-top: 4px;
+}
+.add-link-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-lt); }
+
+.empty-link-msg {
+  text-align: center;
+  padding: 28px 20px;
+  color: var(--tm);
+}
+.empty-link-msg i { font-size: 1.6rem; opacity: .2; display: block; margin-bottom: 8px; }
+.empty-link-msg p { font-size: .84rem; line-height: 1.5; }
+
+#links-list { max-height: 340px; overflow-y: auto; margin-bottom: 4px; }
