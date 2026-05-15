@@ -23,18 +23,52 @@ const API_URL = "https://script.google.com/macros/s/AKfycbywfjsKdUhdnh1ul7j6m5hG
 
 /* ══════════════════════════════════════════════════════════════
    🖼️  STEP 2: BRAND LOGO URL
-   To change the logo, update the URL below.
+   Paste any image URL here — Google Drive, Imgur, etc.
+   OR leave as "" to use the default text brand name.
 
-   For Google Drive:
-   1. Upload logo to Google Drive
-   2. Right-click → Share → "Anyone with the link" → Copy link
-   3. Get the file ID from the link (the long code between /d/ and /view)
-   4. Use this format: https://drive.google.com/thumbnail?id=FILE_ID&sz=w400
-
-   For Imgur:
-   Upload to imgur.com → right-click image → Copy image address
+   How to get a direct image URL:
+   • Upload to https://imgur.com → right-click image → Copy image address
+   • Google Drive: Share file → Get link → change "view" to "uc?export=view"
+     Example: https://drive.google.com/uc?export=view&id=YOUR_FILE_ID
 ══════════════════════════════════════════════════════════════ */
 const BRAND_LOGO_URL = "https://drive.google.com/thumbnail?id=18aiuiSN9uj-mJtOkGB1rNt4GP6yUbvuO&sz=w400";
+
+/* ══════════════════════════════════════════════════════════════
+   🔗 STEP 3: EXTERNAL LINKS (Admin sidebar Quick Links)
+   Add links you use often — Google Sheet, WhatsApp, any URL.
+   Leave url as "" to hide that link.
+   You can also add/edit links from the app itself (Admin sidebar).
+
+   icon: any Font Awesome class  →  fontawesome.com/icons
+   color: hex color for the icon
+══════════════════════════════════════════════════════════════ */
+const EXTERNAL_LINKS = [
+  {
+    icon:  "fas fa-table-cells-large",
+    label: "Google Sheet (Database)",
+    url:   "https://docs.google.com/spreadsheets",   // ← Paste your sheet URL
+    color: "#059669"
+  },
+  {
+    icon:  "fas fa-cogs",
+    label: "System Master",
+    url:   "",                                        // ← Paste your system link
+    color: "#2563eb"
+  },
+  {
+    icon:  "fas fa-chart-bar",
+    label: "Reports Dashboard",
+    url:   "",
+    color: "#c8780a"
+  },
+  {
+    icon:  "fab fa-whatsapp",
+    label: "WhatsApp Group",
+    url:   "",                                        // e.g. https://chat.whatsapp.com/xxx
+    color: "#25D366"
+  },
+];
+const ACTIVE_LINKS = EXTERNAL_LINKS.filter(l => l.url && l.url.trim() !== "");
 
 /* ══ ADMIN ══ */
 const ADMIN = {
@@ -152,30 +186,25 @@ function applyLogo(){
 
   // Left login panel logo
   const ll=$("ll-logo");
-  if(ll && url){
-    ll.classList.add("has-logo");
-    ll.innerHTML=`<img src="${url}" alt="Raghuvir Sweets"
-      style="max-width:240px;max-height:120px;object-fit:contain;display:block"
-      onerror="this.parentElement.innerHTML='<i class=\'fas fa-store-alt\'></i>'"
-    />`;
-    // Hide text brand name — logo replaces it
-    const bt=$("ll-brand-text");
-    if(bt) bt.style.display="none";
+  if(ll){
+    if(url){
+      ll.classList.add("has-logo");
+      ll.innerHTML=`<img src="${url}" alt="Raghuvir"
+        style="max-width:200px;max-height:100px;object-fit:contain;filter:brightness(0) invert(1)"
+        onerror="this.style.filter='none'"
+      />`;
+    }
   }
-  // Sidebar title — update if logo shown
-  const sbTitle=document.querySelector(".sb-name");
-  if(sbTitle && url) sbTitle.textContent="Raghuvir";
 
   // Mobile top logo
   const ml=$("mob-logo");
-  if(ml && url){
-    ml.classList.add("has-logo");
-    ml.style.cssText="background:transparent;border-radius:0;width:110px;height:50px;overflow:visible;flex-shrink:0;display:flex;align-items:center";
-    ml.innerHTML=`<img src="${url}" alt="Raghuvir" style="width:100%;height:100%;object-fit:contain"
-      onerror="this.parentElement.innerHTML='<i class=\'fas fa-store-alt\'></i>'"
-    />`;
-    const mn=$("mob-brand-name");
-    if(mn) mn.style.display="none";
+  if(ml){
+    if(url){
+      ml.style.cssText="background:transparent;border-radius:0;width:90px;height:44px;overflow:visible;flex-shrink:0";
+      ml.innerHTML=`<img src="${url}" alt="Raghuvir" style="width:100%;height:100%;object-fit:contain"
+        onerror="this.parentElement.innerHTML='<i class=\\'fas fa-store-alt\\'></i>'"
+      />`;
+    }
   }
 
   // Sidebar logo
@@ -194,10 +223,7 @@ function applyLogo(){
   // Doer header brand
   const db=$("d-hdr-brand-logo");
   if(db && url){
-    db.style.cssText="display:flex;align-items:center";
-    db.innerHTML=`<img src="${url}" style="height:34px;max-width:120px;object-fit:contain"
-      onerror="this.parentElement.innerHTML='<i class=\'fas fa-store-alt\'></i> Raghuvir'"
-    />`;
+    db.innerHTML=`<img src="${url}" style="height:30px;object-fit:contain;vertical-align:middle"/>`;
   }
 }
 
@@ -284,7 +310,7 @@ function doLogin(){
       if(isEmail){
         return showErr("l-err","No account found with this email. Please register first.");
       } else {
-        return showErr("l-err","Name not found. Please type your exact name as registered, or enter your email address instead.");
+        return showErr("l-err","Name not found. Please check spelling or use your email.");
       }
     }
     if(String(doer.password).trim()!==String(pass).trim()){
@@ -372,6 +398,7 @@ function launchAdmin(user){
     const ok=await refreshAllData();
     if(ok){renderOverview();renderTasks();renderStaff();populateDDs();updateNums();}
   });
+  renderExternalLinks();
   gTab("overview",$$(".sl")[0]);
 }
 
@@ -655,14 +682,6 @@ document.addEventListener("DOMContentLoaded",async()=>{
     return;
   }
 
-  // ── Show splash on first visit ──
-  // Splash shows "Use App" / "Use as Website" choice to user.
-  // It shows on every first visit until user makes a choice.
-  // isStandalone() = already running as installed app → skip splash.
-  if(shouldShowSplash()){
-    setTimeout(()=>showSplash(), 300);
-  }
-
   // Check persistent session
   const sess=Session.get();
   if(sess){
@@ -694,24 +713,15 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 
 /* ══════════════════════════════════════════════════════════════
-   PWA — Service Worker + Splash + Install Banner
-   Flow:
-   1. Page opens → if first visit & not installed → show SPLASH
-   2. Splash has "Use App" + "Use as Website" buttons
-   3. beforeinstallprompt fires → capture it
-   4. "Use App" tapped → trigger native install OR show instructions
-   5. "Use as Website" → dismiss splash, go to login
-   6. After choice → show login page
-   7. Install banner shows on login for users who chose website earlier
+   PWA
 ══════════════════════════════════════════════════════════════ */
-const _SW=`const CV="rsb-v8",RV="rsb-rt-v5";const SHELL=["./","./Index.html","./Style.css","./App.js"];const CDN=["fonts.googleapis.com","fonts.gstatic.com","cdn.jsdelivr.net","cdnjs.cloudflare.com","script.google.com"];self.addEventListener("install",e=>{e.waitUntil(caches.open(CV).then(c=>c.addAll(SHELL).catch(()=>{})).then(()=>self.skipWaiting()))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CV&&k!==RV).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener("fetch",e=>{const req=e.request,url=new URL(req.url);if(req.method!=="GET"||url.protocol==="chrome-extension:")return;if(CDN.some(h=>url.hostname.includes(h))||url.hostname.includes("google")){e.respondWith(fetch(req).catch(()=>caches.match(req)||new Response("",{status:408})));return}if(url.origin===self.location.origin){e.respondWith(caches.match(req).then(cached=>{const nw=fetch(req).then(r=>{if(r.ok)caches.open(CV).then(c=>c.put(req,r.clone()));return r}).catch(()=>null);return cached||nw||new Response("Offline",{status:503})}))}});self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});`;
+const _SW=`const CV="rsb-v8",RV="rsb-rt-v5";const SHELL=["./","./Index.html","./Style.css","./App.js"];const CDN=["fonts.googleapis.com","fonts.gstatic.com","cdn.jsdelivr.net","cdnjs.cloudflare.com"];self.addEventListener("install",e=>{e.waitUntil(caches.open(CV).then(c=>c.addAll(SHELL).catch(()=>{})).then(()=>self.skipWaiting()))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CV&&k!==RV).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener("fetch",e=>{const req=e.request,url=new URL(req.url);if(req.method!=="GET"||url.protocol==="chrome-extension:")return;if(CDN.some(h=>url.hostname.includes(h))||url.hostname.includes("google")){e.respondWith(fetch(req).catch(()=>caches.match(req)||new Response("",{status:408})));return}if(url.origin===self.location.origin){e.respondWith(caches.match(req).then(cached=>{const nw=fetch(req).then(r=>{if(r.ok)caches.open(CV).then(c=>c.put(req,r.clone()));return r}).catch(()=>null);return cached||nw||new Response("Offline",{status:503})}))}});self.addEventListener("message",e=>{if(e.data?.type==="SKIP_WAITING")self.skipWaiting()});`;
 
-let _installPrompt = null;
-window._pwaInstallReady = false;
+let _installPrompt=null;
+window._pwaInstallReady=false;
 
-/* ── Service Worker ── */
 async function initSW(){
-  if(!("serviceWorker" in navigator))return;
+  if(!("serviceWorker"in navigator))return;
   try{
     const blob=new Blob([_SW],{type:"application/javascript"});
     const reg=await navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:"./"});
@@ -719,208 +729,232 @@ async function initSW(){
   }catch(e){console.warn("[SW]",e.message);}
 }
 
-/* ══ SPLASH SCREEN LOGIC ══
-   Shows full-screen "Use App / Use as Website" on first visit.
-   Remembers choice in localStorage so it never shows again
-   once the user has decided. */
-
+/* ══ SPLASH ══ */
 function shouldShowSplash(){
-  if(isStandalone())return false;                    // already running as installed app
-  if(localStorage.getItem("rsb_choice"))return false;// already chose before
+  if(isStandalone())return false;
+  if(localStorage.getItem("rsb_choice"))return false;
   return true;
 }
 
 function showSplash(){
   const s=$("app-choice-splash");
-  if(s){ s.style.display="flex"; }
-  // Apply logo inside phone mockup
+  if(s)s.style.display="flex";
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  const isSafari=isIOS&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|OPiOS/.test(navigator.userAgent);
+  if(isIOS){
+    const aa=$("android-actions");if(aa)aa.style.display="none";
+    const ia=$("ios-actions");if(ia)ia.style.display="flex";
+    const na=$("splash-note-android");if(na)na.style.display="none";
+    const ni=$("splash-note-ios");if(ni)ni.style.display="block";
+    if(!isSafari){
+      const card=s&&s.querySelector(".ios-steps-card");
+      if(card&&!card.querySelector(".safari-warn")){
+        const note=document.createElement("div");note.className="safari-warn";
+        note.style.cssText="background:rgba(255,200,50,.15);border:1px solid rgba(255,200,50,.3);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:.78rem;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:8px";
+        note.innerHTML=`<i class="fas fa-triangle-exclamation" style="color:#f0c040"></i>Install ke liye <strong>Safari</strong> mein kholein`;
+        card.insertBefore(note,card.firstChild);
+      }
+    }
+  } else {
+    const aa=$("android-actions");if(aa)aa.style.display="flex";
+    const ia=$("ios-actions");if(ia)ia.style.display="none";
+  }
   if(BRAND_LOGO_URL.trim()){
-    const pl=$("ph-logo-el");
-    if(pl) pl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:4px"/>`;
-    const sl=$("splash-logo");
-    if(sl) sl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:12px"/>`;
+    const pl=$("ph-logo-el");if(pl)pl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:4px"/>`;
+    const sl=$("splash-logo");if(sl)sl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:12px"/>`;
   }
 }
 
-function hideSplash(){
-  const s=$("app-choice-splash");
-  if(s) s.style.display="none";
-}
+function hideSplash(){const s=$("app-choice-splash");if(s)s.style.display="none";}
 
-/* ── "Use App" button on splash ── */
 async function chooseApp(){
   const btn=$("sc-app-btn");
-  const mainTxt = btn ? btn.querySelector(".sib-main") : null;
-  const subTxt  = btn ? btn.querySelector(".sib-sub")  : null;
-
+  const mainTxt=btn?btn.querySelector(".sib-main"):null;
+  const subTxt=btn?btn.querySelector(".sib-sub"):null;
   if(_installPrompt){
-    /* Native prompt ready — trigger it */
-    if(mainTxt) mainTxt.textContent="Installing…";
-    if(btn) btn.disabled=true;
-
+    if(mainTxt)mainTxt.textContent="Installing…";
+    if(btn)btn.disabled=true;
     _installPrompt.prompt();
     const{outcome}=await _installPrompt.userChoice;
-
     if(outcome==="accepted"){
-      /* User accepted install */
-      _installPrompt=null; window._pwaInstallReady=false;
+      _installPrompt=null;window._pwaInstallReady=false;
       localStorage.setItem("rsb_choice","app");
-      hideSplash();
-      hideInstallBanner();
-      hideInstallUI();
-      /* Login screen already visible behind splash */
+      hideSplash();hideInstallBanner();hideInstallUI();
     } else {
-      /* User cancelled — reset button, stay on splash */
-      if(mainTxt) mainTxt.textContent="Use App";
-      if(subTxt)  subTxt.textContent="Add to home screen · Works offline";
-      if(btn) btn.disabled=false;
+      if(mainTxt)mainTxt.textContent="Use App";
+      if(subTxt)subTxt.textContent="Home screen pe install karein · Free";
+      if(btn)btn.disabled=false;
     }
   } else {
-    /* Prompt not yet fired (may come shortly) — show instructions & dismiss */
     localStorage.setItem("rsb_choice","web");
     hideSplash();
-    const isAndroid=/android/i.test(navigator.userAgent);
     const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-    if(isIOS){
-      setTimeout(()=>toast("iPhone pe: Share (□↑) tap karein → 'Add to Home Screen'","info",9000),400);
-    } else if(isAndroid){
-      setTimeout(()=>toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",9000),400);
-    } else {
-      setTimeout(()=>toast("Browser menu → 'Install App' tap karein","info",9000),400);
-    }
-    /* Show install banner on login so they can try again */
+    const isAndroid=/android/i.test(navigator.userAgent);
+    if(isIOS) setTimeout(()=>toast("iPhone: Share (□↑) → 'Add to Home Screen'","info",9000),400);
+    else if(isAndroid) setTimeout(()=>toast("Chrome menu (⋮) → 'Add to Home Screen'","info",9000),400);
+    else setTimeout(()=>toast("Browser menu → 'Install App'","info",9000),400);
     setTimeout(()=>showInstallBanner(),500);
   }
 }
 
-/* ── "Use as Website" button on splash ── */
 function chooseWeb(){
   localStorage.setItem("rsb_choice","web");
   hideSplash();
-  /* Show small install banner on login page as reminder */
-  if(window._pwaInstallReady) setTimeout(()=>showInstallBanner(),300);
+  if(window._pwaInstallReady)setTimeout(()=>showInstallBanner(),300);
 }
 
-/* ══ beforeinstallprompt ══
-   Fires on Android Chrome on HTTPS when app is installable.
-   We capture it so chooseApp() can trigger it on demand. */
 window.addEventListener("beforeinstallprompt",e=>{
-  e.preventDefault();
-  _installPrompt=e;
-  window._pwaInstallReady=true;
-
-  /* Update "Use App" button text to show it's ready */
+  e.preventDefault();_installPrompt=e;window._pwaInstallReady=true;
   const btn=$("sc-app-btn");
-  if(btn){
-    const sub=btn.querySelector(".sib-sub");
-    if(sub) sub.textContent="Ek tap mein install karein!";
-  }
-
-  /* If splash is visible — update it */
-  const splash=$("app-choice-splash");
-  const splashVisible = splash && splash.style.display!=="none";
-
-  /* If splash already dismissed & user chose "web" — show banner on login */
+  if(btn){const sub=btn.querySelector(".sib-sub");if(sub)sub.textContent="Ek tap mein install karein!";}
   const choice=localStorage.getItem("rsb_choice");
-  if(choice==="web"){
-    showInstallBanner();
-    showInstallUI();
-  }
-
-  /* Apply logo to banner icon */
+  if(choice==="web"){showInstallBanner();showInstallUI();}
   if(BRAND_LOGO_URL.trim()){
     const ic=$("inst-banner-icon");
-    if(ic) ic.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:8px"/>`;
-    /* Also update splash logo if visible */
-    if(splashVisible){
-      const sl=$("splash-logo");
-      if(sl) sl.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:12px"/>`;
-    }
+    if(ic)ic.innerHTML=`<img src="${BRAND_LOGO_URL.trim()}" style="width:100%;height:100%;object-fit:contain;border-radius:8px"/>`;
   }
 });
 
-/* ── App installed ── */
 window.addEventListener("appinstalled",()=>{
-  _installPrompt=null; window._pwaInstallReady=false;
-  localStorage.setItem("rsb_choice","app");
-  localStorage.setItem("rsb_installed","1");
-  hideSplash();
-  hideInstallBanner();
-  hideInstallUI();
+  _installPrompt=null;window._pwaInstallReady=false;
+  localStorage.setItem("rsb_choice","app");localStorage.setItem("rsb_installed","1");
+  hideSplash();hideInstallBanner();hideInstallUI();
   toast("App install ho gaya! 🎉 Home screen se open karein","ok",6000);
 });
 
-/* ══ INSTALL BANNER (login page top) ══
-   Small banner shown on login page when:
-   - User chose "Use as Website" on splash but prompt is ready
-   - User dismissed splash and prompt fired later */
 function showInstallBanner(){
   if(isStandalone())return;
   if(localStorage.getItem("rsb_installed"))return;
-  const b=$("install-banner");
-  if(b) b.style.display="block";
+  const b=$("install-banner");if(b)b.style.display="block";
 }
-function hideInstallBanner(){
-  const b=$("install-banner");
-  if(b) b.style.display="none";
-}
+function hideInstallBanner(){const b=$("install-banner");if(b)b.style.display="none";}
 
-/* ── Banner "Install" button ── */
 async function bannerInstall(){
   const btn=$("inst-install-btn");
   if(!_installPrompt){
     const isAndroid=/android/i.test(navigator.userAgent);
-    if(isAndroid) toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
-    else           toast("Browser menu → 'Install App' tap karein","info",7000);
+    if(isAndroid)toast("Chrome menu (⋮) → 'Add to Home Screen'","info",7000);
+    else toast("Browser menu → 'Install App'","info",7000);
     return;
   }
   if(btn){btn.innerHTML=`<i class="fas fa-spinner fa-spin"></i> Installing…`;btn.disabled=true;}
   _installPrompt.prompt();
   const{outcome}=await _installPrompt.userChoice;
   if(outcome==="accepted"){
-    _installPrompt=null; window._pwaInstallReady=false;
+    _installPrompt=null;window._pwaInstallReady=false;
     localStorage.setItem("rsb_choice","app");
-    hideInstallBanner(); hideInstallUI();
-  } else {
-    if(btn){btn.innerHTML=`<i class="fas fa-download"></i> Install`;btn.disabled=false;}
-  }
+    hideInstallBanner();hideInstallUI();
+  } else {if(btn){btn.innerHTML=`<i class="fas fa-download"></i> Install`;btn.disabled=false;}}
 }
 
-/* ── Banner dismiss ── */
-function bannerDismiss(){
-  hideInstallBanner();
-}
+function bannerDismiss(){hideInstallBanner();}
 
-/* ── Sidebar/topbar Install button ── */
 async function installPWA(){
   if(_installPrompt){
     _installPrompt.prompt();
     const{outcome}=await _installPrompt.userChoice;
-    if(outcome==="accepted"){
-      _installPrompt=null; window._pwaInstallReady=false;
-      localStorage.setItem("rsb_choice","app");
-      hideInstallBanner(); hideInstallUI();
-    }
-  } else if(isStandalone()){
-    toast("App already installed! ✅","ok");
-  } else {
-    const isAndroid=/android/i.test(navigator.userAgent);
-    if(isAndroid) toast("Chrome menu (⋮) → 'Add to Home Screen' tap karein","info",7000);
-    else           toast("Browser menu → 'Install App' tap karein","info",7000);
-  }
+    if(outcome==="accepted"){_installPrompt=null;window._pwaInstallReady=false;localStorage.setItem("rsb_choice","app");hideInstallBanner();hideInstallUI();}
+  } else if(isStandalone()){toast("App already installed! ✅","ok");}
+  else{const isAndroid=/android/i.test(navigator.userAgent);if(isAndroid)toast("Chrome menu (⋮) → 'Add to Home Screen'","info",7000);else toast("Browser menu → 'Install App'","info",7000);}
 }
 
 function showInstallUI(){
-  const s=$("sb-install-row"); if(s) s.style.display="block";
+  const s=$("sb-install-row");if(s)s.style.display="block";
   [$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="flex";});
 }
 function hideInstallUI(){
-  const s=$("sb-install-row"); if(s) s.style.display="none";
+  const s=$("sb-install-row");if(s)s.style.display="none";
   [$("mob-install-btn"),$("d-install-btn")].forEach(e=>{if(e)e.style.display="none";});
 }
+function isStandalone(){return window.matchMedia("(display-mode:standalone)").matches||navigator.standalone===true;}
 
-function isStandalone(){
-  return window.matchMedia("(display-mode:standalone)").matches || navigator.standalone===true;
+/* ══ BOOT ══ */
+document.addEventListener("DOMContentLoaded",async()=>{
+  applyLogo();
+  if(API_URL==="YOUR_APPS_SCRIPT_WEB_APP_URL"){
+    showScreen("screen-login");
+    setTimeout(()=>toast("⚠️ Paste your Apps Script URL in App.js","warn",10000),500);
+    initSW();return;
+  }
+  if(shouldShowSplash()){setTimeout(()=>showSplash(),300);}
+  const sess=Session.get();
+  if(sess){
+    if(sess.role==="admin"&&sess.email===ADMIN.email){launchAdmin(sess);}
+    else if(sess.id){
+      showLoading("Loading…");
+      API.getUserById(sess.id).then(fresh=>{
+        hideLoading();
+        if(fresh&&fresh.found!==false&&fresh.id){const merged={...sess,...fresh};_currentDoer=merged;Session.save(merged);launchDoer(merged);}
+        else{Session.clear();showScreen("screen-login");}
+      }).catch(()=>{hideLoading();_currentDoer=sess;launchDoer(sess);});
+    } else {Session.clear();showScreen("screen-login");}
+  } else {showScreen("screen-login");}
+  initSW();
+});
+
+
+
+/* ══════════════════════════════════════════════════════════════
+   MANAGE QUICK LINKS
+══════════════════════════════════════════════════════════════ */
+const LINKS_KEY="rsb_ext_links";
+function getLinks(){try{const s=localStorage.getItem(LINKS_KEY);if(s)return JSON.parse(s);}catch(e){}return ACTIVE_LINKS.map(l=>({...l}));}
+function saveLinksToStorage(links){localStorage.setItem(LINKS_KEY,JSON.stringify(links));}
+
+function renderExternalLinks(){
+  const container=$("sb-ext-links");if(!container)return;
+  const links=getLinks().filter(l=>l.url&&l.url.trim()!=="");
+  if(!links.length){container.style.display="none";return;}
+  container.style.display="block";
+  container.innerHTML=`<div class="sb-ext-label">Quick Links</div>${links.map((l,i)=>`<a class="sl sl-ext" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer"><span class="sl-ic" style="color:${l.color||"var(--tm)"}"><i class="${esc(l.icon||"fas fa-link")}"></i></span><span class="sl-tx">${esc(l.label||"Link "+(i+1))}</span><i class="fas fa-arrow-up-right-from-square sl-ext-ico"></i></a>`).join("")}`;
+}
+
+function openManageLinks(){renderLinksEditor();openM("m-links");closeSB();}
+
+const ICON_OPTIONS=[
+  {icon:"fas fa-table-cells-large",label:"Sheet"},{icon:"fas fa-cogs",label:"Settings"},
+  {icon:"fas fa-chart-bar",label:"Reports"},{icon:"fab fa-whatsapp",label:"WhatsApp"},
+  {icon:"fas fa-cart-shopping",label:"Orders"},{icon:"fas fa-store",label:"Store"},
+  {icon:"fas fa-link",label:"Link"},{icon:"fas fa-file-invoice",label:"Invoice"},
+  {icon:"fas fa-calendar",label:"Calendar"},{icon:"fas fa-phone",label:"Phone"},
+  {icon:"fas fa-envelope",label:"Email"},{icon:"fas fa-globe",label:"Website"},
+  {icon:"fas fa-database",label:"Database"},{icon:"fas fa-truck",label:"Delivery"},
+  {icon:"fas fa-users",label:"Staff"},{icon:"fas fa-key",label:"Access"},
+];
+const COLOR_OPTIONS=["#c0392b","#059669","#2563eb","#c8780a","#7c3aed","#25D366","#0088cc","#e11d48","#0284c7","#64748b"];
+
+function renderLinksEditor(){
+  const list=$("links-list");if(!list)return;
+  const links=getLinks();
+  if(!links.length){list.innerHTML=`<div class="empty-link-msg"><i class="fas fa-link"></i><p>No links yet. Click "+ Add New Link".</p></div>`;return;}
+  list.innerHTML=links.map((l,i)=>`
+    <div class="link-row" id="lr-${i}">
+      <div class="link-row-top">
+        <div class="link-icon-btn" onclick="toggleIconPicker(${i})" style="color:${l.color||"var(--tm)"}"><i class="${l.icon||"fas fa-link"}"></i></div>
+        <input type="text" class="fi link-label-inp" id="ll-${i}" value="${esc(l.label||"")}" placeholder="Link name"/>
+        <button class="link-del-btn" onclick="deleteLinkRow(${i})"><i class="fas fa-trash"></i></button>
+      </div>
+      <div class="link-row-url">
+        <input type="url" class="fi link-url-inp" id="lu-${i}" value="${esc(l.url||"")}" placeholder="https://…"/>
+      </div>
+      <div class="icon-picker" id="ip-${i}" style="display:none">
+        <div class="ip-icons">${ICON_OPTIONS.map(o=>`<button class="ip-icon-btn ${l.icon===o.icon?"ip-sel":""}" onclick="selectIcon(${i},'${o.icon}')" title="${o.label}"><i class="${o.icon}"></i></button>`).join("")}</div>
+        <div class="ip-colors">${COLOR_OPTIONS.map(c=>`<button class="ip-color-btn ${l.color===c?"ip-col-sel":""}" style="background:${c}" onclick="selectColor(${i},'${c}')"></button>`).join("")}</div>
+      </div>
+    </div>`).join("");
+}
+
+function toggleIconPicker(i){const p=$(`ip-${i}`);if(!p)return;$$(".icon-picker").forEach(x=>{if(x.id!==`ip-${i}`)x.style.display="none";});p.style.display=p.style.display==="none"?"block":"none";}
+function selectIcon(i,ic){const links=getLinks();if(!links[i])return;links[i].icon=ic;saveLinksToStorage(links);const b=document.querySelector(`#lr-${i} .link-icon-btn i`);if(b)b.className=ic;$$(`#ip-${i} .ip-icon-btn`).forEach(b=>{b.classList.toggle("ip-sel",b.querySelector("i")?.className===ic);});$(`ip-${i}`).style.display="none";}
+function selectColor(i,color){const links=getLinks();if(!links[i])return;links[i].color=color;saveLinksToStorage(links);const ib=document.querySelector(`#lr-${i} .link-icon-btn`);if(ib)ib.style.color=color;$$(`#ip-${i} .ip-color-btn`).forEach(b=>{b.classList.toggle("ip-col-sel",b.style.backgroundColor===color);});}
+function addLinkRow(){const links=getLinks();links.push({icon:"fas fa-link",label:"",url:"",color:"#2563eb"});saveLinksToStorage(links);renderLinksEditor();const list=$("links-list");if(list)setTimeout(()=>list.scrollTop=list.scrollHeight,50);}
+function deleteLinkRow(i){const links=getLinks();links.splice(i,1);saveLinksToStorage(links);renderLinksEditor();}
+function saveLinks(){
+  const links=getLinks();
+  links.forEach((l,i)=>{const le=$(`ll-${i}`),ue=$(`lu-${i}`);if(le)l.label=le.value.trim();if(ue)l.url=ue.value.trim();});
+  const cleaned=links.filter(l=>l.label||l.url);
+  saveLinksToStorage(cleaned);renderExternalLinks();closeM("m-links");
+  toast("Quick links saved! ✅","ok");
 }
 
 Object.assign(window,{
@@ -930,6 +964,7 @@ Object.assign(window,{
   dTab,dStart,dDone,
   exportExcel,
   installPWA,chooseApp,chooseWeb,
-  bannerInstall,bannerDismiss,showSplash,hideSplash,
+  renderExternalLinks,openManageLinks,addLinkRow,deleteLinkRow,
+  saveLinks,selectIcon,selectColor,toggleIconPicker,
 });
 console.log("%c 🍬 Raghuvir Sweets And Bakers ","background:#c0392b;color:#fff;font-size:13px;font-weight:bold;padding:4px 10px;border-radius:6px");
